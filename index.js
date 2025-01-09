@@ -136,4 +136,4 @@ const overlayMaps = {
   Cycles: cycleLayer,
 };
 
-L.control.layers(baseMaps, overlayMaps, { position: "topleft" }).addTo(map);
+L.control.layers(baseMaps, overlayMaps, { position: "bottomleft" }).addTo(map);
