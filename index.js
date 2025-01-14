@@ -1,7 +1,7 @@
 const map = L.map("map").setView([53.7067, -1.9134], 12);
 
 const baseLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 20,
+  maxZoom: 19,
   attribution:
     '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map);
@@ -9,7 +9,7 @@ const baseLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", 
 const terrainLayer = L.tileLayer(
   "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
   {
-    maxZoom: 20,
+    maxZoom: 18,
     attribution:
       'Map data: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> contributors',
   }
@@ -29,8 +29,9 @@ const marketIcon = L.icon({
   popupAnchor: [0, -25],
 });
 
-const marketLayer = L.layerGroup();
-const cycleLayer = L.layerGroup();
+// Initialize marker cluster groups
+const marketCluster = L.markerClusterGroup();
+const cycleCluster = L.markerClusterGroup();
 
 fetch("markets.geojson")
   .then((response) => response.json())
@@ -42,7 +43,7 @@ fetch("markets.geojson")
         geometry: feature.geometry,
       };
 
-      L.geoJSON(marketsGeojsonFeature, {
+      const marker = L.geoJSON(marketsGeojsonFeature, {
         pointToLayer: function (feature, latlng) {
           return L.marker(latlng, { icon: marketIcon });
         },
@@ -64,7 +65,8 @@ fetch("markets.geojson")
                     `;
           layer.bindPopup(popupContent);
         },
-      }).addTo(marketLayer);
+      });
+      marketCluster.addLayer(marker);
     });
   })
   .catch((error) => console.error("Error loading markets.geojson:", error));
@@ -79,7 +81,7 @@ fetch("cycleStorage.geojson")
         geometry: feature.geometry,
       };
 
-      L.geoJSON(cycleGeojsonFeature, {
+      const marker = L.geoJSON(cycleGeojsonFeature, {
         pointToLayer: function (feature, latlng) {
           return L.marker(latlng, { icon: cycleIcon });
         },
@@ -97,15 +99,17 @@ fetch("cycleStorage.geojson")
 
           layer.bindPopup(cyclePopupContent);
         },
-      }).addTo(cycleLayer);
+      });
+      cycleCluster.addLayer(marker);
     });
   })
   .catch((error) =>
     console.error("Error loading cycleStorage.geojson:", error)
   );
 
-marketLayer.addTo(map);
-cycleLayer.addTo(map);
+// Add marker clusters to the map
+marketCluster.addTo(map);
+cycleCluster.addTo(map);
 
 document.getElementById("findLocation").addEventListener("click", function () {
   map.locate({ setView: true, maxZoom: 16 });
@@ -132,8 +136,8 @@ const baseMaps = {
 };
 
 const overlayMaps = {
-  Markets: marketLayer,
-  Cycles: cycleLayer,
+  Markets: marketCluster,
+  Cycles: cycleCluster,
 };
 
 L.control.layers(baseMaps, overlayMaps, { position: "bottomleft" }).addTo(map);
